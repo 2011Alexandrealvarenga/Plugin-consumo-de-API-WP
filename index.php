@@ -11,67 +11,36 @@ License: GLPV2
 Text Domain: segundo plugin
 */
 
+// recurso de segurança
+if(!function_exists('add_action')){
+    echo 'Opa! eu sou só um plugin, não posso ser chamado diretamente';
+    exit;
+}
+
 // setup
 define('API_URL', __FILE__);
 
 // includes
-// include('inc/api.php');
-// include('inc/enqueue.php');
-// require 'inc/resultado-dados.php'; 
+include('inc/api.php');
+include('inc/enqueue.php');
 
-add_action('init','consumindo_api');
+// hooks
+add_action('wp_enqueue_scripts', 'br_api_css'); //style e script
+add_action('rest_api_init','get_api_ajax_endpoint');
+add_shortcode('rest-ajax','shortcode_consumindo_api');
 
-function consumindo_api(){
-
-    $url = 'https://api.giphy.com/v1/gifs/trending?api_key=pLURtkhVrUXr3KG25Gy5IvzziV5OrZGa';
-    $arguments = array(
-        'method' => 'GET'
-    );
-
-    $response = wp_remote_get($url, $arguments);
-
-    if(is_wp_error($response)){
-        $error_message = $response->get_error_message();
-        return 'mensagem de erro: ' .$error_message;
-    }else{
-        $response;
-    }
-
-
-    $resultado = wp_remote_retrieve_body($response);
-
-    return $resultado;
-}
-
-$resultado = consumindo_api();
-
-
-echo '<pre>';
-    print_r($resultado->data);
-echo '</pre>';
-?>
- 
-
-
-<?php 
-
-
-
-
-
-    // $responseEmbed = wp_remote_get( $urlEmbed, array(
-    //     'method'      => 'GET'
-    //     )
-    // );
-    
-    // if ( is_wp_error( $responseEmbed ) ) {
-    //     return false;
-    // } else {
-    //     $rEmbed = wp_remote_retrieve_body( $responseEmbed );
-    //     $jsonEmbed = json_decode($rEmbed, true);       
-    
-    // }
-    
-    // echo '<pre>';
-    //     echo print_r($jsonEmbed);
-    // echo '</pre>';
+function shortcode_consumindo_api($resultado){
+    $resultado = consumindo_api_ajax_callback();
+    ?>
+    <div class="container">
+        <div class="row">
+            <div class="col">            
+                <?php 
+                foreach($resultado->data as $get_result){?>
+                <p>titulo: <?php echo $get_result->title ;?></p> 
+                <img  width="200px" height="200px" src="<?php echo substr($get_result->images->downsized_large->url,0,-5);?>"><br>
+                <?php  }?>
+            </div>
+        </div>
+    </div>
+<?php }?>
